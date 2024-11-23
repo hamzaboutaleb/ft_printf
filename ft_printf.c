@@ -6,7 +6,7 @@
 /*   By: hboutale <hboutale@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 13:05:54 by hboutale          #+#    #+#             */
-/*   Updated: 2024/11/23 11:34:24 by hboutale         ###   ########.fr       */
+/*   Updated: 2024/11/23 15:23:04 by hboutale         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,19 @@ int	includes(char *s, char c)
 	return (0);
 }
 
+int	is_number(char c)
+{
+	return (c >= '1' && c <= '9');
+}
+
+int	is_flag(char c)
+{
+	char	*flags;
+
+	flags = "0 -+#";
+	return (includes(flags, c));
+}
+
 int	is_specifier(char c)
 {
 	char	*specifiers;
@@ -30,20 +43,96 @@ int	is_specifier(char c)
 	specifiers = "cspdiuxX";
 	return (includes(specifiers, c));
 }
-
 void	init_opts(t_opts *opts)
 {
-	opts->hash = FALSE;
-	opts->minus = FALSE;
-	opts->space = FALSE;
-	opts->width = FALSE;
-	opts->zero = FALSE;
+	opts->flags = 0;
+	opts->width = 0;
+	opts->specifier = 0;
 }
+
+int	set_flag(int op, int flag)
+{
+	return (op | flag);
+}
+
+t_bool	is_set(int op, int flag)
+{
+	return (op & flag);
+}
+
+int	reset_flag(int op, int flag)
+{
+	return (op & ~flag);
+}
+
+int	collect_flags(int flags, char c)
+{
+	flags = 0;
+	if (c == "0")
+		flags = set_flag(flags, FLAG_ZERO);
+	else if (c == ' ')
+		flags = set_flag(flags, FLAG_SPACE);
+	else if (c == '-')
+		flags = set_flag(flags, FLAG_MINUS);
+	else if (c == '+')
+		flags = set_flag(flags, FLAG_PLUS);
+	else if (c == '#')
+		flags |= FLAG_HASH;
+	return (flags);
+}
+
+unsigned int	get_width(t_scanner *scnr)
+{
+	unsigned int	result;
+
+	scnr->cursor--;
+	while (peek(scnr) >= '0' && peek(scnr) <= '9')
+	{
+		result = result * 10 + peek(scnr) - '0';
+		scnr->cursor++;
+	}
+	return (result);
+}
+
+t_opts	parse_format_specifier(t_scanner *scnr)
+{
+	t_opts	op;
+	char	c;
+
+	init_opts(&op);
+	while (!is_at_end(scnr))
+	{
+		c = advance(scnr);
+		if (is_flag(c))
+			op.flags = collect_flags(op.flags, c);
+		else if (is_number(c))
+			op.width = get_width(scnr);
+		else
+		{
+			op.specifier = c;
+			return (op);
+		}
+	}
+	return (op);
+}
+
+void	reslove_specifiers_conflict(t_opts *op)
+{
+	if (is_set(op->flags, FLAG_MINUS)) 
+		op->flags = reset_flag(op->flags, FLAG_ZERO);
+	if (is_set(op->flags, FLAG_PLUS))
+		op->flags = reset_flag(op->flags, FLAG_SPACE);
+}
+
 int	handle_specifiers(t_scanner *scnr)
 {
 	t_opts	op;
+	char	c;
 
-	init_opts(&op);
+	op = parse_format_specifier(scnr);
+	if (!op.specifier)
+		return (0);
+	reslove_specifiers_conflict(&op);
 	return (1);
 }
 int	process_format(t_scanner *scnr, va_list *ap)

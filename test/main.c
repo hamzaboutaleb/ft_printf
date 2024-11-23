@@ -5,8 +5,8 @@ int	main(void)
 {
 	int	n;
 
-	fclose(stdout);
-	n = printf("%-+--d\n", 50);
+	n = printf("%+ d", -55);
+	printf("return: %d\n", n);
 	return (n);
 }
 
