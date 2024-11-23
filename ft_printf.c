@@ -6,7 +6,7 @@
 /*   By: hboutale <hboutale@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 13:05:54 by hboutale          #+#    #+#             */
-/*   Updated: 2024/11/23 15:23:04 by hboutale         ###   ########.fr       */
+/*   Updated: 2024/11/23 19:01:11 by hboutale         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,6 +58,23 @@ int	set_flag(int op, int flag)
 t_bool	is_set(int op, int flag)
 {
 	return (op & flag);
+}
+
+int	reset_flags(int count, ...)
+{
+	va_list	ap;
+	int		flags;
+	int		i;
+
+	va_start(ap, count);
+	flags = va_arg(ap, int);
+	i = 0;
+	while (i < count - 1)
+	{
+		flags = reset_flag(flags, va_arg(ap, int));
+		i++;
+	}
+	return (flags);
 }
 
 int	reset_flag(int op, int flag)
@@ -118,10 +135,18 @@ t_opts	parse_format_specifier(t_scanner *scnr)
 
 void	reslove_specifiers_conflict(t_opts *op)
 {
-	if (is_set(op->flags, FLAG_MINUS)) 
+	if (is_set(op->flags, FLAG_MINUS))
 		op->flags = reset_flag(op->flags, FLAG_ZERO);
 	if (is_set(op->flags, FLAG_PLUS))
 		op->flags = reset_flag(op->flags, FLAG_SPACE);
+	if (!is_specifier(op->specifier))
+	{
+		op->flags = reset_flags(4, op->flags, FLAG_PLUS, FLAG_SPACE, FLAG_HASH);
+		return ;
+	}
+	// c, s ==> width 0 -
+	if (op->specifier == 'c' || op->specifier == 's')
+		op->flags = reset_flags(4, op->flags, FLAG_HASH, FLAG_PLUS, FLAG_SPACE);
 }
 
 int	handle_specifiers(t_scanner *scnr)
