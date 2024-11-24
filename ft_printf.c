@@ -6,11 +6,23 @@
 /*   By: hboutale <hboutale@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 13:05:54 by hboutale          #+#    #+#             */
-/*   Updated: 2024/11/24 11:30:28 by hboutale         ###   ########.fr       */
+/*   Updated: 2024/11/24 14:37:29 by hboutale         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ft_printf.h"
+
+int	ft_putstr(char *str)
+{
+	int	count;
+
+	count = 0;
+	while (str[count])
+	{
+		count += ft_putchar(str[count]);
+	}
+	return (count);
+}
 
 int	includes(char *s, char c)
 {
@@ -147,6 +159,8 @@ void	reslove_specifiers_conflict(t_opts *op)
 	}
 	if (op->specifier == 'c' || op->specifier == 's')
 		op->flags = reset_flags(4, op->flags, FLAG_HASH, FLAG_PLUS, FLAG_SPACE);
+	if (op->specifier != 'x' && op->specifier != 'X')
+		op->flags = reset_flags(4, op->flags, FLAG_HASH);
 }
 
 int	print_char_n_time(char c, int n)
@@ -189,6 +203,93 @@ int	handle_c(t_opts *op, char c)
 	return (count);
 }
 
+int	handle_s(t_opts *op, char *s)
+{
+	char	char_fill;
+	int		diff;
+	int		count;
+
+	debug_flags(op);
+	char_fill = ' ';
+	count = 0;
+	if (is_set(op->flags, FLAG_ZERO))
+		char_fill = '0';
+	diff = max(op->width - (int)ft_strlen(s), 0);
+	if (diff == 0)
+		return (ft_putstr(s));
+	if (!is_set(op->flags, FLAG_MINUS))
+	{
+		count += print_char_n_time(char_fill, diff);
+		count += ft_putstr(s);
+	}
+	else
+	{
+		count += ft_putstr(s);
+		count += print_char_n_time(char_fill, diff);
+	}
+	return (count);
+}
+
+char	*ultohexa(unsigned long int num)
+{
+	char				*result;
+	unsigned long int	temp;
+	int					len;
+	int					digit;
+
+	if (num == 0)
+		return (ft_strdup("0"));
+	temp = num;
+	len = 0;
+	while (temp > 0)
+	{
+		temp >>= 4;
+		len++;
+	}
+	result = malloc(len + 1);
+	if (!result)
+		return (NULL);
+	result[len] = '\0';
+	while (num > 0)
+	{
+		digit = num & 0xF;
+		result[--len] = digit < 10 ? digit + '0' : digit - 10 + 'a';
+		num >>= 4;
+	}
+	return (result);
+}
+
+int	handle_p(t_opts *op, size_t ptr)
+{
+	char	*num;
+	char	char_fill;
+	int		diff;
+	int		count;
+
+	num = ultohexa(ptr); // wihtout 0x
+	//debug_flags(op);
+	char_fill = ' ';
+	count = 0;
+	if (is_set(op->flags, FLAG_ZERO))
+		char_fill = '0';
+	diff = max(op->width - ((int)ft_strlen(num) + 2), 0); // 2 for 0x
+	if (diff == 0)
+		return (ft_putstr("0x") + ft_putstr(num));
+	if (!is_set(op->flags, FLAG_MINUS))
+	{
+		count += print_char_n_time(char_fill, diff);
+		count += ft_putstr("0x");
+		count += ft_putstr(num);
+	}
+	else
+	{
+		count += ft_putstr("0x");
+		count += ft_putstr(num);
+		count += print_char_n_time(char_fill, diff);
+	}
+	return (count);
+}
+
 int	execute_specifer(t_opts *op, va_list *ap)
 {
 	int		count;
@@ -197,6 +298,10 @@ int	execute_specifer(t_opts *op, va_list *ap)
 	specifier = op->specifier;
 	if (specifier == 'c')
 		return (handle_c(op, va_arg(*ap, int)));
+	if (specifier == 's')
+		return (handle_s(op, va_arg(*ap, char *)));
+	if (specifier == 'p')
+		return (handle_p(op, (size_t)va_arg(*ap, void *)));
 	return (0);
 }
 

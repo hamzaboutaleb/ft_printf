@@ -6,7 +6,7 @@
 /*   By: hboutale <hboutale@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 13:03:34 by hboutale          #+#    #+#             */
-/*   Updated: 2024/11/24 11:25:38 by hboutale         ###   ########.fr       */
+/*   Updated: 2024/11/24 14:13:49 by hboutale         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ int					ft_putchar(char c);
 
 //-------- strings helper
 size_t				ft_strlen(const char *s);
-
+char				*ft_strdup(char *src);
 //--------- number helpers
 int					max(int n1, int n2);
 
