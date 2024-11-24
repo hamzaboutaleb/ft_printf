@@ -6,7 +6,7 @@
 /*   By: hboutale <hboutale@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 13:03:34 by hboutale          #+#    #+#             */
-/*   Updated: 2024/11/24 14:13:49 by hboutale         ###   ########.fr       */
+/*   Updated: 2024/11/24 15:19:11 by hboutale         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ size_t				ft_strlen(const char *s);
 char				*ft_strdup(char *src);
 //--------- number helpers
 int					max(int n1, int n2);
-
+char				*itoa(int num);
 //---------- scanner
 t_scanner			*create_scanner(const char *s);
 t_bool				match(t_scanner *scn, char c);

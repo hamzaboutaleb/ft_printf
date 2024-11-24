@@ -6,7 +6,7 @@
 /*   By: hboutale <hboutale@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 13:05:54 by hboutale          #+#    #+#             */
-/*   Updated: 2024/11/24 14:37:29 by hboutale         ###   ########.fr       */
+/*   Updated: 2024/11/24 17:58:19 by hboutale         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -96,7 +96,6 @@ int	reset_flags(int count, ...)
 
 int	collect_flags(int flags, char c)
 {
-	flags = 0;
 	if (c == '0')
 		flags = set_flag(flags, FLAG_ZERO);
 	else if (c == ' ')
@@ -106,7 +105,7 @@ int	collect_flags(int flags, char c)
 	else if (c == '+')
 		flags = set_flag(flags, FLAG_PLUS);
 	else if (c == '#')
-		flags |= FLAG_HASH;
+		flags = set_flag(flags, FLAG_HASH);
 	return (flags);
 }
 
@@ -134,7 +133,9 @@ t_opts	parse_format_specifier(t_scanner *scnr)
 	{
 		c = advance(scnr);
 		if (is_flag(c))
+		{
 			op.flags = collect_flags(op.flags, c);
+		}
 		else if (is_number(c))
 			op.width = get_width(scnr);
 		else
@@ -157,10 +158,10 @@ void	reslove_specifiers_conflict(t_opts *op)
 		op->flags = reset_flags(4, op->flags, FLAG_PLUS, FLAG_SPACE, FLAG_HASH);
 		return ;
 	}
-	if (op->specifier == 'c' || op->specifier == 's')
+	if (op->specifier == 'c' || op->specifier == 's' || op->specifier == 'u')
 		op->flags = reset_flags(4, op->flags, FLAG_HASH, FLAG_PLUS, FLAG_SPACE);
 	if (op->specifier != 'x' && op->specifier != 'X')
-		op->flags = reset_flags(4, op->flags, FLAG_HASH);
+		op->flags = reset_flags(2, op->flags, FLAG_HASH);
 }
 
 int	print_char_n_time(char c, int n)
@@ -182,7 +183,6 @@ int	handle_c(t_opts *op, char c)
 	int		diff;
 	int		count;
 
-	debug_flags(op);
 	char_fill = ' ';
 	count = 0;
 	if (is_set(op->flags, FLAG_ZERO))
@@ -209,7 +209,6 @@ int	handle_s(t_opts *op, char *s)
 	int		diff;
 	int		count;
 
-	debug_flags(op);
 	char_fill = ' ';
 	count = 0;
 	if (is_set(op->flags, FLAG_ZERO))
@@ -267,23 +266,132 @@ int	handle_p(t_opts *op, size_t ptr)
 	int		count;
 
 	num = ultohexa(ptr); // wihtout 0x
-	//debug_flags(op);
 	char_fill = ' ';
 	count = 0;
 	if (is_set(op->flags, FLAG_ZERO))
 		char_fill = '0';
 	diff = max(op->width - ((int)ft_strlen(num) + 2), 0); // 2 for 0x
 	if (diff == 0)
-		return (ft_putstr("0x") + ft_putstr(num));
-	if (!is_set(op->flags, FLAG_MINUS))
+		count = (ft_putstr("0x") + ft_putstr(num));
+	else if (!is_set(op->flags, FLAG_MINUS))
 	{
 		count += print_char_n_time(char_fill, diff);
-		count += ft_putstr("0x");
+		count += ft_putstr("0x") + ft_putstr(num);
+	}
+	else
+	{
+		count += ft_putstr("0x") + ft_putstr(num);
+		count += print_char_n_time(char_fill, diff);
+	}
+	free(num);
+	return (count);
+}
+int	ft_putsign(t_opts *op, int num)
+{
+	if (num < 0)
+		return (ft_putchar('-'));
+	if (is_set(op->flags, FLAG_PLUS))
+		return (ft_putchar('+'));
+	if (is_set(op->flags, FLAG_SPACE))
+		return (ft_putchar(' '));
+	return (0);
+}
+int	handle_number(t_opts *op, int n)
+{
+	char	*num;
+	char	char_fill;
+	int		diff;
+	int		count;
+	int		sign;
+
+	num = itoa(n);
+	char_fill = ' ';
+	count = 0;
+	sign = 0;
+	if (n < 0 || is_set(op->flags, FLAG_PLUS) || is_set(op->flags, FLAG_SPACE))
+		sign = 1;
+	if (is_set(op->flags, FLAG_ZERO))
+		char_fill = '0';
+	diff = max(op->width - ((int)ft_strlen(num) + sign), 0); // 2 for 0x
+	if (diff == 0)
+		count = (ft_putstr(num));
+	else if (!is_set(op->flags, FLAG_MINUS))
+	{
+		count += ft_putsign(op, n) + print_char_n_time(char_fill, diff);
 		count += ft_putstr(num);
 	}
 	else
 	{
-		count += ft_putstr("0x");
+		count += ft_putsign(op, n) + ft_putstr(num);
+		count += print_char_n_time(char_fill, diff);
+	}
+	free(num);
+	return (count);
+}
+
+char	*uint_to_str(unsigned int num)
+{
+	char			*result;
+	unsigned int	temp;
+	int				length;
+	int				i;
+
+	// Handle special case of 0
+	if (num == 0)
+	{
+		result = (char *)malloc(2);
+		if (result == NULL)
+			return (NULL);
+		result[0] = '0';
+		result[1] = '\0';
+		return (result);
+	}
+	// Count digits
+	temp = num;
+	length = 0;
+	while (temp > 0)
+	{
+		length++;
+		temp /= 10;
+	}
+	// Allocate memory for string (length + 1 for null terminator)
+	result = (char *)malloc(length + 1);
+	if (result == NULL)
+		return (NULL);
+	// Add null terminator
+	result[length] = '\0';
+	// Convert digits from right to left
+	i = length - 1;
+	while (num > 0)
+	{
+		result[i] = '0' + (num % 10);
+		num /= 10;
+		i--;
+	}
+	return (result);
+}
+
+int	handle_u(t_opts *op, unsigned int n)
+{
+	char	char_fill;
+	int		diff;
+	int		count;
+	char	*num;
+
+	char_fill = ' ';
+	count = 0;
+	num = uint_to_str(n);
+	 if (is_set(op->flags, FLAG_ZERO)) char_fill = '0';
+	diff = max(op->width - (int)ft_strlen(num), 0);
+	if (diff == 0)
+		return (ft_putstr(num));
+	if (!is_set(op->flags, FLAG_MINUS))
+	{
+		count += print_char_n_time(char_fill, diff);
+		count += ft_putstr(num);
+	}
+	else
+	{
 		count += ft_putstr(num);
 		count += print_char_n_time(char_fill, diff);
 	}
@@ -302,6 +410,10 @@ int	execute_specifer(t_opts *op, va_list *ap)
 		return (handle_s(op, va_arg(*ap, char *)));
 	if (specifier == 'p')
 		return (handle_p(op, (size_t)va_arg(*ap, void *)));
+	if (specifier == 'd' || specifier == 'i')
+		return (handle_number(op, va_arg(*ap, int)));
+	if (specifier == 'u')
+		return (handle_u(op, va_arg(*ap, unsigned int)));
 	return (0);
 }
 

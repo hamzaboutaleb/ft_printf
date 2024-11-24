@@ -6,7 +6,7 @@
 /*   By: hboutale <hboutale@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/24 11:21:20 by hboutale          #+#    #+#             */
-/*   Updated: 2024/11/24 13:03:01 by hboutale         ###   ########.fr       */
+/*   Updated: 2024/11/24 15:26:17 by hboutale         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ void	debug_flags(t_opts *op)
 {
 	printf("width: %d\n", op->width);
 	printf("specifier: %c\n", op->specifier);
-	printf("flags PLUS: %d\nSPACE: %d\nZERO: %d\nHASH: %d\nMINUS: %d\n",
+	printf("PLUS: %d\nSPACE: %d\nZERO: %d\nHASH: %d\nMINUS: %d\n",
 		op->flags & FLAG_PLUS, op->flags & FLAG_SPACE, op->flags & FLAG_ZERO,
 		op->flags & FLAG_HASH, op->flags & FLAG_MINUS);
 }
