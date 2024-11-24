@@ -6,7 +6,7 @@
 /*   By: hboutale <hboutale@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 13:05:54 by hboutale          #+#    #+#             */
-/*   Updated: 2024/11/23 19:01:11 by hboutale         ###   ########.fr       */
+/*   Updated: 2024/11/24 11:30:28 by hboutale         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,6 +60,11 @@ t_bool	is_set(int op, int flag)
 	return (op & flag);
 }
 
+int	reset_flag(int op, int flag)
+{
+	return (op & ~flag);
+}
+
 int	reset_flags(int count, ...)
 {
 	va_list	ap;
@@ -77,15 +82,10 @@ int	reset_flags(int count, ...)
 	return (flags);
 }
 
-int	reset_flag(int op, int flag)
-{
-	return (op & ~flag);
-}
-
 int	collect_flags(int flags, char c)
 {
 	flags = 0;
-	if (c == "0")
+	if (c == '0')
 		flags = set_flag(flags, FLAG_ZERO);
 	else if (c == ' ')
 		flags = set_flag(flags, FLAG_SPACE);
@@ -102,6 +102,7 @@ unsigned int	get_width(t_scanner *scnr)
 {
 	unsigned int	result;
 
+	result = 0;
 	scnr->cursor--;
 	while (peek(scnr) >= '0' && peek(scnr) <= '9')
 	{
@@ -144,12 +145,62 @@ void	reslove_specifiers_conflict(t_opts *op)
 		op->flags = reset_flags(4, op->flags, FLAG_PLUS, FLAG_SPACE, FLAG_HASH);
 		return ;
 	}
-	// c, s ==> width 0 -
 	if (op->specifier == 'c' || op->specifier == 's')
 		op->flags = reset_flags(4, op->flags, FLAG_HASH, FLAG_PLUS, FLAG_SPACE);
 }
 
-int	handle_specifiers(t_scanner *scnr)
+int	print_char_n_time(char c, int n)
+{
+	int	i;
+
+	i = 0;
+	while (i < n)
+	{
+		ft_putchar(c);
+		i++;
+	}
+	return (n);
+}
+
+int	handle_c(t_opts *op, char c)
+{
+	char	char_fill;
+	int		diff;
+	int		count;
+
+	debug_flags(op);
+	char_fill = ' ';
+	count = 0;
+	if (is_set(op->flags, FLAG_ZERO))
+		char_fill = '0';
+	diff = max(op->width - 1, 0);
+	if (diff == 0)
+		return (ft_putchar(c));
+	if (!is_set(op->flags, FLAG_MINUS))
+	{
+		count += print_char_n_time(char_fill, diff);
+		count += ft_putchar(c);
+	}
+	else
+	{
+		count += ft_putchar(c);
+		count += print_char_n_time(char_fill, diff);
+	}
+	return (count);
+}
+
+int	execute_specifer(t_opts *op, va_list *ap)
+{
+	int		count;
+	char	specifier;
+
+	specifier = op->specifier;
+	if (specifier == 'c')
+		return (handle_c(op, va_arg(*ap, int)));
+	return (0);
+}
+
+int	handle_specifiers(t_scanner *scnr, va_list *ap)
 {
 	t_opts	op;
 	char	c;
@@ -158,7 +209,7 @@ int	handle_specifiers(t_scanner *scnr)
 	if (!op.specifier)
 		return (0);
 	reslove_specifiers_conflict(&op);
-	return (1);
+	return (execute_specifer(&op, ap));
 }
 int	process_format(t_scanner *scnr, va_list *ap)
 {
@@ -170,8 +221,10 @@ int	process_format(t_scanner *scnr, va_list *ap)
 	while (!is_at_end(scnr))
 	{
 		c = advance(scnr);
-		if (match(scnr, '%'))
-			count = handle_specifiers(scnr);
+		if (c == '%')
+		{
+			count = handle_specifiers(scnr, ap);
+		}
 		else
 			count = ft_putchar(c);
 		if (count == -1)

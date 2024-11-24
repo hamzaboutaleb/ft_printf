@@ -4,6 +4,7 @@
 
 int	main(void)
 {
-	int n = ft_printf("e qwe wqe %010");
-	printf("bytes: %d\n", n);
+	int n = ft_printf("%+-10c\n", 'h');
+	int m = printf("%+-10c\n", 'h');
+	printf("bytes: %d -- %d\n", n, m);
 }

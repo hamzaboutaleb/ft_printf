@@ -6,13 +6,14 @@
 /*   By: hboutale <hboutale@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 13:03:34 by hboutale          #+#    #+#             */
-/*   Updated: 2024/11/23 14:34:56 by hboutale         ###   ########.fr       */
+/*   Updated: 2024/11/24 11:25:38 by hboutale         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef FT_PRINTF_H
 # define FT_PRINTF_H
 # include <stdarg.h>
+# include <stdio.h>
 # include <stdlib.h>
 # include <unistd.h>
 
@@ -49,10 +50,16 @@ int					ft_putchar(char c);
 //-------- strings helper
 size_t				ft_strlen(const char *s);
 
+//--------- number helpers
+int					max(int n1, int n2);
+
 //---------- scanner
 t_scanner			*create_scanner(const char *s);
 t_bool				match(t_scanner *scn, char c);
 char				advance(t_scanner *scn);
 char				peek(t_scanner *scn);
 t_bool				is_at_end(t_scanner *scn);
+
+//--------- DEBUG
+void				debug_flags(t_opts *op);
 #endif
