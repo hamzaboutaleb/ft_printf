@@ -5,7 +5,7 @@ int	main(void)
 {
 	int	n;
 
-	n = printf("%0-50p", (void *)1006);
+	n = printf("%.5d", 123456789);
 	printf("\nreturn: %d\n", n);
 	return (n);
 }

@@ -10,8 +10,8 @@ int	main(void)
 	m = 0;
 	n = 0;
 
-	char *format = "%0-#40u\n";
-	int l = -400;
+	char *format = "%#X\n";
+	int l = -100;
 
 	// n = ft_printf("%#0-30p\n", (void *)SIZE_MAX);
 	n = ft_printf(format, l);

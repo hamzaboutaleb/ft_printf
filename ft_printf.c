@@ -6,7 +6,7 @@
 /*   By: hboutale <hboutale@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 13:05:54 by hboutale          #+#    #+#             */
-/*   Updated: 2024/11/24 17:58:19 by hboutale         ###   ########.fr       */
+/*   Updated: 2024/11/25 16:36:44 by hboutale         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,11 +15,15 @@
 int	ft_putstr(char *str)
 {
 	int	count;
+	int	i;
 
+	i = 0;
 	count = 0;
-	while (str[count])
+	while (str[i])
 	{
-		count += ft_putchar(str[count]);
+		if (ft_putchar(str[i++]) == -1)
+			return (-1);
+		count++;
 	}
 	return (count);
 }
@@ -208,22 +212,26 @@ int	handle_s(t_opts *op, char *s)
 	char	char_fill;
 	int		diff;
 	int		count;
+	char	*to_print;
 
+	to_print = s;
+	if (s == NULL)
+		to_print = "(null)";
 	char_fill = ' ';
 	count = 0;
 	if (is_set(op->flags, FLAG_ZERO))
 		char_fill = '0';
-	diff = max(op->width - (int)ft_strlen(s), 0);
+	diff = max(op->width - (int)ft_strlen(to_print), 0);
 	if (diff == 0)
-		return (ft_putstr(s));
+		return (ft_putstr(to_print));
 	if (!is_set(op->flags, FLAG_MINUS))
 	{
 		count += print_char_n_time(char_fill, diff);
-		count += ft_putstr(s);
+		count += ft_putstr(to_print);
 	}
 	else
 	{
-		count += ft_putstr(s);
+		count += ft_putstr(to_print);
 		count += print_char_n_time(char_fill, diff);
 	}
 	return (count);
@@ -258,14 +266,16 @@ char	*ultohexa(unsigned long int num)
 	return (result);
 }
 
-int	handle_p(t_opts *op, size_t ptr)
+int	handle_p(t_opts *op, void *ptr)
 {
 	char	*num;
 	char	char_fill;
 	int		diff;
 	int		count;
 
-	num = ultohexa(ptr); // wihtout 0x
+	num = ultohexa((size_t)ptr); // wihtout 0x
+	if (!num)
+		return (-1);
 	char_fill = ' ';
 	count = 0;
 	if (is_set(op->flags, FLAG_ZERO))
@@ -296,6 +306,7 @@ int	ft_putsign(t_opts *op, int num)
 		return (ft_putchar(' '));
 	return (0);
 }
+
 int	handle_number(t_opts *op, int n)
 {
 	char	*num;
@@ -314,7 +325,7 @@ int	handle_number(t_opts *op, int n)
 		char_fill = '0';
 	diff = max(op->width - ((int)ft_strlen(num) + sign), 0); // 2 for 0x
 	if (diff == 0)
-		count = (ft_putstr(num));
+		count = (ft_putsign(op, n) + ft_putstr(num));
 	else if (!is_set(op->flags, FLAG_MINUS))
 	{
 		count += ft_putsign(op, n) + print_char_n_time(char_fill, diff);
@@ -338,14 +349,7 @@ char	*uint_to_str(unsigned int num)
 
 	// Handle special case of 0
 	if (num == 0)
-	{
-		result = (char *)malloc(2);
-		if (result == NULL)
-			return (NULL);
-		result[0] = '0';
-		result[1] = '\0';
-		return (result);
-	}
+		return (ft_strdup("0"));
 	// Count digits
 	temp = num;
 	length = 0;
@@ -381,11 +385,12 @@ int	handle_u(t_opts *op, unsigned int n)
 	char_fill = ' ';
 	count = 0;
 	num = uint_to_str(n);
-	 if (is_set(op->flags, FLAG_ZERO)) char_fill = '0';
+	if (is_set(op->flags, FLAG_ZERO))
+		char_fill = '0';
 	diff = max(op->width - (int)ft_strlen(num), 0);
 	if (diff == 0)
-		return (ft_putstr(num));
-	if (!is_set(op->flags, FLAG_MINUS))
+		count += ft_putstr(num);
+	else if (!is_set(op->flags, FLAG_MINUS))
 	{
 		count += print_char_n_time(char_fill, diff);
 		count += ft_putstr(num);
@@ -395,12 +400,91 @@ int	handle_u(t_opts *op, unsigned int n)
 		count += ft_putstr(num);
 		count += print_char_n_time(char_fill, diff);
 	}
+	free(num);
+	return (count);
+}
+char	*int_to_hex(unsigned int num, int uppercase)
+{
+	const char	*hex_lower = "0123456789abcdef";
+	const char	*hex_upper = "0123456789ABCDEF";
+	char		*hex_string;
+	int			index;
+	const char	*hex_digits;
+	char		temp[11];
+	int			temp_index;
+
+	hex_digits = hex_lower;
+	if (uppercase)
+		hex_digits = hex_upper;
+	hex_string = malloc(11 * sizeof(char));
+	index = 0;
+	if (num == 0)
+	{
+		hex_string[index++] = '0';
+		hex_string[index++] = '\0';
+		return (hex_string);
+	}
+	temp_index = 0;
+	while (num > 0)
+	{
+		temp[temp_index++] = hex_digits[num % 16];
+		num /= 16;
+	}
+	// Reverse digits into final string
+	while (temp_index > 0)
+	{
+		hex_string[index++] = temp[--temp_index];
+	}
+	hex_string[index] = '\0';
+	return (hex_string);
+}
+
+int	ft_puthex(t_opts *op)
+{
+	if (is_set(op->flags, FLAG_HASH))
+	{
+		if (op->specifier == 'x')
+			return (ft_putstr("0x"));
+		return (ft_putstr("0X"));
+	}
+	return (0);
+}
+
+int	handle_x(t_opts *op, unsigned int n, int uppercase)
+{
+	char	*num;
+	char	char_fill;
+	int		diff;
+	int		count;
+
+	num = int_to_hex(n, uppercase);
+	if (!num)
+		return (-1);
+	char_fill = ' ';
+	count = 0;
+	if (is_set(op->flags, FLAG_ZERO))
+		char_fill = '0';
+	if (is_set(op->flags, FLAG_HASH))
+		op->width -= 2;
+	diff = max(op->width - ((int)ft_strlen(num)), 0); // 2 for 0x
+	if (diff == 0)
+		count = (ft_puthex(op) + ft_putstr(num));
+	else if (!is_set(op->flags, FLAG_MINUS))
+	{
+		count += ft_puthex(op) + print_char_n_time(char_fill, diff);
+		count += ft_putstr(num);
+	}
+	else
+	{
+		count += ft_puthex(op) + ft_putstr(num);
+		count += print_char_n_time(char_fill, diff);
+	}
+	free(num);
 	return (count);
 }
 
 int	execute_specifer(t_opts *op, va_list *ap)
 {
-	int		count;
 	char	specifier;
 
 	specifier = op->specifier;
@@ -409,18 +493,23 @@ int	execute_specifer(t_opts *op, va_list *ap)
 	if (specifier == 's')
 		return (handle_s(op, va_arg(*ap, char *)));
 	if (specifier == 'p')
-		return (handle_p(op, (size_t)va_arg(*ap, void *)));
+		return (handle_p(op, va_arg(*ap, void *)));
 	if (specifier == 'd' || specifier == 'i')
 		return (handle_number(op, va_arg(*ap, int)));
 	if (specifier == 'u')
 		return (handle_u(op, va_arg(*ap, unsigned int)));
+	if (specifier == 'x')
+		return (handle_x(op, va_arg(*ap, unsigned int), 0));
+	if (specifier == 'X')
+		return (handle_x(op, va_arg(*ap, unsigned int), 1));
+	if (specifier == '%')
+		return (ft_putchar('%'));
 	return (0);
 }
 
 int	handle_specifiers(t_scanner *scnr, va_list *ap)
 {
 	t_opts	op;
-	char	c;
 
 	op = parse_format_specifier(scnr);
 	if (!op.specifier)

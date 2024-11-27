@@ -6,7 +6,7 @@
 /*   By: hboutale <hboutale@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/21 13:03:41 by hboutale          #+#    #+#             */
-/*   Updated: 2024/11/24 16:01:44 by hboutale         ###   ########.fr       */
+/*   Updated: 2024/11/25 14:48:36 by hboutale         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,11 +27,12 @@ int	min(int n1, int n2)
 
 char	*itoa(int num)
 {
-	int		is_negative;
 	int		temp;
 	int		len;
 	char	*str;
 
+	if (num == -2147483648)
+		return (ft_strdup("2147483648"));
 	if (num < 0)
 		num = -num;
 	temp = num;

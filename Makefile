@@ -1,4 +1,4 @@
-SRCS = ft_printf.c helpers.c number_helpers.c string_helpers.c io_helper.c
+SRCS = ft_printf.c helpers.c number_helpers.c string_helpers.c io_helper.c helpers.c scanner.c 
 OBJS = $(SRCS:.c=.o)
 NAME = libftprintf.a
 CC = gcc
@@ -16,9 +16,9 @@ fclean: clean
 	@rm -rf $(NAME)
 
 re: fclean all
-
+bonus: all
 test: all
 	@$(CC) $(CFLAGS) -L. -lftprintf ./__tests__/main.c -o test
 	@./test
 
-.PHONY: all clean fclean re
+.PHONY: all clean fclean re bonus
